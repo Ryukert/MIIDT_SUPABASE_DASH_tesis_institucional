@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>MIIDT – Plataforma SHM-IoT | Dashboard institucional</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            uagro: {
+              red: '#8C1D18',
+              gray: '#6B6E70',
+              blue: '#1F3A5F',
+              white: '#FFFFFF',
+              bg: '#F5F5F5'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Supabase JS v2 UMD -> window.supabase (solo se usa si seleccionas Supabase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="stylesheet" href="./main.css" />
+</head>
+
+<body class="app-bg text-slate-900 thesis-dashboard">
+  <header class="hero">
+    <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-5 lg:flex-row lg:items-center">
+      <div class="flex items-start gap-4">
+        <div class="logo-wrap">
+          <img src="./assets/miidt.png" class="h-14 w-14 object-contain" alt="MIIDT">
+        </div>
+        <div>
+          <div class="eyebrow">Universidad Autónoma de Guerrero · Facultad de Ingeniería · MIIDT</div>
+          <div class="text-2xl md:text-3xl font-semibold text-white leading-tight">Plataforma SHM-IoT para monitoreo de salud estructural</div>
+          <div class="hero-sub mt-2">
+            Visualización institucional para adquisición, seguimiento experimental y análisis de aceleraciones provenientes del
+            <b>Arduino Nano RP2040 Connect</b>, los sensores <b>MPU9250</b> y el sensor integrado <b>LSM6DSOX</b>.
+          </div>
+          <div class="hero-meta mt-3 flex flex-wrap items-center gap-2">
+            <span class="hero-pill">Modalidad local</span>
+            <span class="hero-pill">Modalidad en Raspberry Pi 4</span>
+            <span class="hero-pill">Modalidad híbrida local + nube</span>
+            <span class="hero-pill">Zona horaria: America/Mexico_City</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="hero-stat">
+          <div class="hero-stat-label">Enfoque</div>
+          <div class="hero-stat-value">Investigación aplicada</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Fuentes soportadas</div>
+          <div class="hero-stat-value">Supabase / Firebase RTDB</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Objetivo</div>
+          <div class="hero-stat-value">Seguimiento y análisis vibracional</div>
+        </div>
+        <div class="hero-brand">
+          <div class="badge">Realtime</div>
+          <img src="./assets/uagro.png" class="h-14 object-contain" alt="UAGro">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-5 space-y-5">
+
+
+    <section class="overview-grid">
+      <article class="spotlight-card">
+        <div class="spotlight-kicker">Resumen del sistema</div>
+        <h2 class="spotlight-title">Dashboard académico con identidad institucional</h2>
+        <p class="spotlight-text">
+          Esta versión organiza la información experimental de forma más clara para defensa, tesis y demostración técnica.
+          Se prioriza la lectura rápida de estado, configuración, sensores, gráficas temporales y registro de eventos.
+        </p>
+        <div class="feature-list">
+          <div class="feature-item">
+            <span class="feature-dot"></span>
+            <div>
+              <b>Adquisición:</b> dos MPU9250 externos y un LSM6DSOX integrado en el Arduino RP2040.
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-dot"></span>
+            <div>
+              <b>Procesamiento:</b> operación local en PC o Raspberry Pi 4 con visualización continua.
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-dot"></span>
+            <div>
+              <b>Persistencia:</b> almacenamiento y consulta histórica desde Supabase o Firebase RTDB.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="mini-panel">
+        <div class="mini-panel-title">Arquitectura de trabajo</div>
+        <div class="mini-chip-wrap">
+          <span class="mini-chip">Sensado</span>
+          <span class="mini-chip">UART / I2C</span>
+          <span class="mini-chip">Procesamiento</span>
+          <span class="mini-chip">Visualización</span>
+          <span class="mini-chip">Nube</span>
+        </div>
+        <p class="mini-panel-text">
+          Diseñada para exponer de forma comprensible el flujo experimental: captura, transmisión, almacenamiento,
+          consulta histórica y seguimiento en tiempo real.
+        </p>
+      </article>
+
+      <article class="mini-panel">
+        <div class="mini-panel-title">Uso sugerido en tesis</div>
+        <p class="mini-panel-text">
+          Conveniente para documentar pruebas, comparar modalidades de operación, mostrar primeras y últimas lecturas,
+          y respaldar la interpretación de amplitudes y tendencia vibracional.
+        </p>
+        <div class="mini-metrics">
+          <div><span>Modo visual</span><b>Institucional</b></div>
+          <div><span>Lectura</span><b>Clara y ordenada</b></div>
+          <div><span>Presentación</span><b>Profesional</b></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Configuración -->
+    <section class="card">
+      <div class="card-title">Conexión (elige tu base)</div>
+
+      <div class="grid md:grid-cols-3 gap-3">
+        <div>
+          <label class="lbl">Fuente</label>
+          <select id="dbSource" class="inp">
+            <option value="supabase" selected>Supabase</option>
+            <option value="firebase">Firebase RTDB</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <div class="note">
+            <b>Tip:</b> Para Vercel, este dashboard es <b>100% estático</b>. Solo pega tus credenciales (Anon Key / Firebase config).
+          </div>
+        </div>
+      </div>
+
+      <!-- Supabase config -->
+      <div id="supabaseCfg" class="grid md:grid-cols-3 gap-3 mt-3">
+        <div>
+          <label class="lbl">Supabase URL</label>
+          <input id="sbUrl" class="inp" placeholder="https://xxxx.supabase.co" />
+        </div>
+        <div>
+          <label class="lbl">Anon Key</label>
+          <input id="sbAnon" class="inp" placeholder="eyJhbGciOi..." />
+        </div>
+        <div>
+          <label class="lbl">Tabla</label>
+          <input id="sbTable" class="inp" value="sensor_data" />
+        </div>
+      </div>
+
+      <!-- Firebase config -->
+      <div id="firebaseCfg" class="grid md:grid-cols-3 gap-3 mt-3 hidden">
+        <div>
+          <label class="lbl">Firebase apiKey</label>
+          <input id="fbApiKey" class="inp" placeholder="AIza..." />
+        </div>
+        <div>
+          <label class="lbl">Firebase authDomain</label>
+          <input id="fbAuthDomain" class="inp" placeholder="xxxxx.firebaseapp.com" />
+        </div>
+        <div>
+          <label class="lbl">Firebase databaseURL</label>
+          <input id="fbDbUrl" class="inp" placeholder="https://xxxx-default-rtdb.firebaseio.com" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="lbl">Path (nodo) RTDB</label>
+          <input id="fbPath" class="inp" value="sensor_data" placeholder="sensor_data / esp32/item / etc" />
+        </div>
+        <div>
+          <label class="lbl">Campo de tiempo</label>
+          <input id="fbTsField" class="inp" value="timestamp" placeholder="timestamp | ts" />
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-3 mt-3">
+        <div>
+          <label class="lbl">Histórico a cargar</label>
+          <select id="limitLast" class="inp">
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+            <option value="2000" selected>2000</option>
+            <option value="5000">5000</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="lbl">Session ID (opcional)</label>
+          <input id="sessionId" class="inp" placeholder="ej. session_2026..." />
+        </div>
+
+        <div class="flex items-end gap-2">
+          <button id="btnConnect" class="btn btn-primary w-full">Conectar</button>
+          <button id="btnDisconnect" class="btn w-full">Desconectar</button>
+        </div>
+      </div>
+
+      <div class="mt-3 flex items-center gap-3 text-sm">
+        <div class="flex items-center gap-2">
+          <span id="dotDb" class="dot bad"></span>
+          <span>DB: <b id="dbStatus">OFF</b></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="dotRt" class="dot bad"></span>
+          <span>Realtime: <b id="rtStatus">OFF</b></span>
+        </div>
+        <div class="ml-auto text-uagro-gray">Ventana: <b id="winLabel">400</b> pts | Decimación: <b id="decLabel">1</b></div>
+      </div>
+    </section>
+
+    <!-- Controles -->
+    <section class="card">
+      <div class="card-title">Controles</div>
+
+      <div class="grid md:grid-cols-5 gap-2">
+        <button id="pauseBtn" class="btn">Pausar</button>
+        <button id="clearBtn" class="btn">Limpiar</button>
+        <button id="exportBtn" class="btn">Exportar CSV (log)</button>
+        <button id="simBtn" class="btn">Simulador OFF</button>
+        <label class="flex items-center gap-2 text-sm px-2">
+          <input id="autoScroll" type="checkbox" checked />
+          Autoscroll log
+        </label>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-3 mt-3">
+        <div>
+          <label class="lbl">Ventana (puntos)</label>
+          <select id="winSel" class="inp">
+            <option value="200">200</option>
+            <option value="400" selected>400</option>
+            <option value="800">800</option>
+            <option value="1200">1200</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Decimación (1 = todo)</label>
+          <select id="decSel" class="inp">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="lbl">Baseline RMS (opcional)</label>
+          <div class="flex gap-2">
+            <button id="btnSetBaseline" class="btn w-full">Set</button>
+            <button id="btnClearBaseline" class="btn w-full">Clear</button>
+          </div>
+        </div>
+
+        <div class="text-sm flex items-end">
+          <div class="w-full">
+            RMS actual: <b id="rmsNow">-</b> |
+            Baseline: <b id="rmsBase">-</b> |
+            Ratio: <b id="rmsRatio">-</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✅ BLOQUES (Primera/Última lectura) por DISPOSITIVO -->
+    <section class="space-y-4">
+
+      <!-- PC -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-2">
+          <div class="card-title">📟 PC — Resumen por sensor</div>
+          <div class="text-xs text-uagro-gray">Timestamps en <b>Hora local (MX)</b></div>
+        </div>
+
+        <div class="kpi-wrap">
+          <div class="kpi-head">
+            <div class="kpi-title">Primera lectura (anclada)</div>
+            <div class="kpi-sub">Primer registro por sensor (UTC)</div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor A</div><div class="kpi-tag">mpu9250_1</div></div>
+              <div class="kpi-body">Hora: <b id="pc_first_A_t">-</b><br>X: <b id="pc_first_A_x">-</b> | Y: <b id="pc_first_A_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor B</div><div class="kpi-tag">mpu9250_2</div></div>
+              <div class="kpi-body">Hora: <b id="pc_first_B_t">-</b><br>X: <b id="pc_first_B_x">-</b> | Y: <b id="pc_first_B_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor C</div><div class="kpi-tag">lsm6dsox</div></div>
+              <div class="kpi-body">Hora: <b id="pc_first_C_t">-</b><br>X: <b id="pc_first_C_x">-</b> | Y: <b id="pc_first_C_y">-</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-wrap mt-3">
+          <div class="kpi-head">
+            <div class="kpi-title">Última lectura (en vivo)</div>
+            <div class="kpi-sub">Último registro recibido por sensor (UTC)</div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor A</div><div class="kpi-tag">mpu9250_1</div></div>
+              <div class="kpi-body">Hora: <b id="pc_last_A_t">-</b><br>X: <b id="pc_last_A_x">-</b> | Y: <b id="pc_last_A_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor B</div><div class="kpi-tag">mpu9250_2</div></div>
+              <div class="kpi-body">Hora: <b id="pc_last_B_t">-</b><br>X: <b id="pc_last_B_x">-</b> | Y: <b id="pc_last_B_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor C</div><div class="kpi-tag">lsm6dsox</div></div>
+              <div class="kpi-body">Hora: <b id="pc_last_C_t">-</b><br>X: <b id="pc_last_C_x">-</b> | Y: <b id="pc_last_C_y">-</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RPI -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-2">
+          <div class="card-title">🍓 RPi — Resumen por sensor</div>
+          <div class="text-xs text-uagro-gray">Timestamps mostrados en <b>UTC</b></div>
+        </div>
+
+        <div class="kpi-wrap">
+          <div class="kpi-head">
+            <div class="kpi-title">Primera lectura (anclada)</div>
+            <div class="kpi-sub">Primer registro por sensor (UTC)</div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor A</div><div class="kpi-tag">mpu9250_1</div></div>
+              <div class="kpi-body">Hora: <b id="rpi_first_A_t">-</b><br>X: <b id="rpi_first_A_x">-</b> | Y: <b id="rpi_first_A_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor B</div><div class="kpi-tag">mpu9250_2</div></div>
+              <div class="kpi-body">Hora: <b id="rpi_first_B_t">-</b><br>X: <b id="rpi_first_B_x">-</b> | Y: <b id="rpi_first_B_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor C</div><div class="kpi-tag">lsm6dsox</div></div>
+              <div class="kpi-body">Hora: <b id="rpi_first_C_t">-</b><br>X: <b id="rpi_first_C_x">-</b> | Y: <b id="rpi_first_C_y">-</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-wrap mt-3">
+          <div class="kpi-head">
+            <div class="kpi-title">Última lectura (en vivo)</div>
+            <div class="kpi-sub">Último registro recibido por sensor (UTC)</div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor A</div><div class="kpi-tag">mpu9250_1</div></div>
+              <div class="kpi-body">Hora: <b id="rpi_last_A_t">-</b><br>X: <b id="rpi_last_A_x">-</b> | Y: <b id="rpi_last_A_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor B</div><div class="kpi-tag">mpu9250_2</div></div>
+              <div class="kpi-body">Hora: <b id="rpi_last_B_t">-</b><br>X: <b id="rpi_last_B_x">-</b> | Y: <b id="rpi_last_B_y">-</b></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-row"><div class="kpi-name">Sensor C</div><div class="kpi-tag">lsm6dsox</div></div>
+              <div class="kpi-body">Hora: <b id="rpi_last_C_t">-</b><br>X: <b id="rpi_last_C_x">-</b> | Y: <b id="rpi_last_C_y">-</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Charts por DISPOSITIVO (X/Y) -->
+    <section class="space-y-4">
+
+      <!-- PC -->
+      <div class="card">
+        <div class="card-title">📟 Dispositivo: PC</div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="card">
+            <div class="card-title">MPU9250_1 (X/Y)</div>
+            <canvas id="chartPC_A"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-title">MPU9250_2 (X/Y)</div>
+            <canvas id="chartPC_B"></canvas>
+          </div>
+          <div class="card md:col-span-2">
+            <div class="card-title">LSM6DSOX (X/Y)</div>
+            <canvas id="chartPC_C"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RPI -->
+      <div class="card">
+        <div class="card-title">🍓 Dispositivo: Raspberry Pi</div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="card">
+            <div class="card-title">MPU9250_1 (X/Y)</div>
+            <canvas id="chartRPI_A"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-title">MPU9250_2 (X/Y)</div>
+            <canvas id="chartRPI_B"></canvas>
+          </div>
+          <div class="card md:col-span-2">
+            <div class="card-title">LSM6DSOX (X/Y)</div>
+            <canvas id="chartRPI_C"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Log -->
+    <section class="card">
+      <div class="card-title">Log (últimos eventos)</div>
+      <div id="logScroll" class="log-scroll">
+        <table class="w-full text-sm">
+          <thead class="sticky top-0 bg-white">
+            <tr class="text-left border-b">
+              <th class="p-2">Hora</th>
+              <th class="p-2">Sensor</th>
+              <th class="p-2">X</th>
+              <th class="p-2">Y</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+    <footer class="site-footer">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-title">MIIDT · UAGro</div>
+          <div class="footer-text">Dashboard institucional orientado al proyecto de monitoreo de salud estructural con tecnologías IoT de bajo costo.</div>
+        </div>
+        <div>
+          <div class="footer-title">Capacidades</div>
+          <div class="footer-text">Consulta histórica, monitoreo en tiempo real, exportación de log y visualización por dispositivo y sensor.</div>
+        </div>
+        <div>
+          <div class="footer-title">Presentación</div>
+          <div class="footer-text">Diseño optimizado para contexto académico, reportes técnicos y demostraciones de laboratorio.</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
